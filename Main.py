@@ -12,10 +12,15 @@ app = Flask(__name__)
 users = []
 
 def validate_email(email):
-    pass
+    pattern = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
+    return re.match(pattern, email) is not None
 
 def validate_date(date):
-    pass
+    try:
+        datetime.strptime(date, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
 
 @app.route('/')
 def home():
@@ -75,10 +80,14 @@ def register_users():
     card_number = data['card_number']
 
     if not validate_email(email):
-        pass
+        # Fails to satisfy valid email format
+        # return HTTP Status code: 400
+        return jsonify({"error": f"Invalid email: {email}"}), 400
 
     if not validate_date(dob):
-        pass
+        # Fails to satisfy valid ISO 8601 format
+        # return HTTP Status code: 400
+        return jsonify({"error": f"Invalid date format: {dob}"}), 400
 
     if any(user["username"] == username for user in users):
         # If the username has already been used
@@ -88,9 +97,9 @@ def register_users():
     user = {
         "username": username,
         "email": email,
-        "password": password, # Obviously hashed
+        "password": password, # Obviously hashed later
         "dob": dob,
-        "card_number": card_number, # Obviously hashed
+        "card_number": card_number, # Obviously hashed later
     }
 
     users.append(user)
