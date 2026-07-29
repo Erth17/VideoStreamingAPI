@@ -46,6 +46,14 @@ def validate_card_number(card_number):
     # If given should have 16 digits.
     return re.fullmatch(r"\d{16}", card_number) is not None
 
+def validate_amount(amount):
+    # Amount must be between 0 and 999 (Three digits)
+    try:
+        value = float(amount)
+        return 0 <= value <= 999
+    except (TypeError, ValueError):
+        return False
+
 @app.route('/users', methods=['POST'])
 def register_users():
     data = request.get_json()
@@ -202,7 +210,7 @@ def take_payments():
             'error': "Card number should have 16 digits."
         }), 400
 
-    if amount < 0 or amount > 999:
+    if not validate_amount(amount):
         return jsonify({
             'error': "Amount must be between 0 and 999."
         }), 400
