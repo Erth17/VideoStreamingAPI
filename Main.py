@@ -46,31 +46,6 @@ def validate_card_number(card_number):
     # If given should have 16 digits.
     return re.fullmatch(r"\d{16}", card_number) is not None
 
-@app.route('/')
-def home():
-    return "Home"
-
-@app.route('/get-user/<user_id>')
-def get_user(user_id):
-    user_data = {
-        'user_id': user_id,
-        'name' : 'James',
-        'email' : '<EMAIL>'
-    }
-
-    extra = request.args.get('extra')
-    if extra:
-        user_data['extra'] = extra
-
-    return jsonify(user_data), 200
-
-@app.route('/create-user', methods=['POST'])
-def create_user():
-    if request.method == 'POST':
-        user_data = request.get_json()
-
-    return jsonify(user_data), 201
-
 @app.route('/users', methods=['POST'])
 def register_users():
     data = request.get_json()
@@ -86,10 +61,6 @@ def register_users():
         'email',
         'DoB']
 
-    optional_fields = [
-        'card_number',
-    ]
-
     missing = [field for field in required_fields if field not in data]
 
     if missing:
@@ -101,7 +72,7 @@ def register_users():
     password = data['password']
     email = data['email']
     dob = data['DoB']
-    card_number = data.get('card_number')
+    card_number = data.get('card_number') # Returns None if no card is registered
 
     if not validate_username(username):
         # Fails to satisfy valid username format
@@ -171,15 +142,15 @@ def register_users():
 
 @app.route("/users", methods=['GET'])
 def get_users():
-    card_filter = request.args.get("card_filter")
+    CreditCard = request.args.get("CreditCard")
 
-    if card_filter is None:
+    if CreditCard is None:
         filtered_users = users
 
-    elif card_filter.lower() == "yes":
+    elif CreditCard.lower() == "yes":
         filtered_users = [user for user in users if user.get("card_number")]
 
-    elif card_filter.lower() == "no":
+    elif CreditCard.lower() == "no":
         filtered_users = [user for user in users if not user.get("card_number")]
 
     else:
@@ -200,6 +171,57 @@ def get_users():
 
     return jsonify(response), 200
 
+@app.route("/payments", methods=['POST'])
+def take_payments():
+    data = request.get_json()
+
+    if not data:
+        # If the request body fails to satisfy any of the basic validation checks
+        # return HTTP Status code: 400
+        return jsonify({}), 400
+
+    required_fields = [
+        'card_number',
+        'amount'
+    ]
+
+    missing = [field for field in required_fields if field not in data]
+
+    if missing:
+        # If the request body fails to satisfy any of the basic validation checks
+        # return HTTP Status code: 400
+        return jsonify({"error": f"Missing fields: {', '.join(missing)}"}), 400
+
+    card_number = data['card_number']
+    amount = data['amount']
+
+    if not validate_card_number(card_number):
+        # Fails to satisfy valid card number length
+        # return HTTP Status code: 400
+        return jsonify({
+            'error': "Card number should have 16 digits."
+        }), 400
+
+    if amount < 0 or amount > 999:
+        return jsonify({
+            'error': "Amount must be between 0 and 999."
+        }), 400
+
+    card_users = [user.get("card_number") for user in users if user.get("card_number") is not None]
+
+    if card_number not in card_users:
+        # If credit card number is not registered against any Registered User
+        # return HTTP Status code: 404
+        return jsonify({
+            'error': "Card number is not registered."
+        }), 404
+
+    # Handle payment details
+
+    return jsonify({
+           # A successful payment should return HTTP Status code: 201
+        "message": "Payment successful!",
+    }), 201
 
 if __name__ == '__main__':
     app.run(debug=True)
