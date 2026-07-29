@@ -10,6 +10,7 @@ app = Flask(__name__)
 
 # Temporary storage
 users = []
+payments = []
 
 def validate_username(username):
     # alphanumeric, no spaces
@@ -215,20 +216,33 @@ def take_payments():
             'error': "Amount must be between 0 and 999."
         }), 400
 
-    card_users = [user.get("card_number") for user in users if user.get("card_number") is not None]
+    matching_user = next(
+        (user for user in users if user.get("card_number") == card_number),
+        None
+    )
 
-    if card_number not in card_users:
+    if matching_user is None:
         # If credit card number is not registered against any Registered User
         # return HTTP Status code: 404
         return jsonify({
             'error': "Card number is not registered."
         }), 404
 
-    # Handle payment details
+    payment = {
+        "id" : len(payments) + 1,
+        "username" : matching_user["username"],
+        "card_number" : card_number,
+        "amount" : float(amount),
+        "timestamp" : datetime.now().isoformat() + "Z"
+    }
+
+    payments.append(payment)
 
     return jsonify({
            # A successful payment should return HTTP Status code: 201
         "message": "Payment successful!",
+        "payment_id": payment["id"],
+        "amount": payment["amount"],
     }), 201
 
 if __name__ == '__main__':
