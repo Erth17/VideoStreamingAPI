@@ -147,7 +147,7 @@ def register_users():
         }), 400
 
     if any(user["username"] == username for user in users):
-        # If the username has already been used reject the request
+        # If the username has already been used, reject the request
         # return HTTP Status code: 409
         return jsonify({
             "error": f"Username already exists"
@@ -168,6 +168,37 @@ def register_users():
         "message": "User created",
         "user_id": user["id"],
     }), 201
+
+@app.route("/users", methods=['GET'])
+def get_users():
+    card_filter = request.args.get("card_filter")
+
+    if card_filter is None:
+        filtered_users = users
+
+    elif card_filter.lower() == "yes":
+        filtered_users = [user for user in users if user.get("card_number")]
+
+    elif card_filter.lower() == "no":
+        filtered_users = [user for user in users if not user.get("card_number")]
+
+    else:
+        return jsonify({
+            'error': "Card filter must be either yes or no."
+        }), 400
+
+    response = []
+
+    for user in filtered_users:
+        response.append({
+            "id": user["id"],
+            "username": user["username"],
+            "email": user["email"],
+            "dob": user["dob"],
+            "has_card_number": bool(user.get("card_number"))
+        })
+
+    return jsonify(response), 200
 
 
 if __name__ == '__main__':
