@@ -134,6 +134,7 @@ def register_users():
         }), 409
 
     user = {
+        "id" : len(users) + 1,
         "username": username,
         "email": email,
         "password": password, # Obviously hashed later
