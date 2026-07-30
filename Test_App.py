@@ -30,19 +30,35 @@ def test_register_user_success(client):
     assert response.status_code == 201
     assert len(users) == 1
 
-def test_register_user_validation(client):
-    invalid = valid_user()
-    invalid["password"] = "invalidpassword"
+def test_register_user_username_validation(client):
+    invalid_user = valid_user()
+    invalid_user["username"] = ""
 
-    response = client.post("/users", json=invalid)
+    response = client.post("/users", json=invalid_user)
+
+    assert response.status_code == 400
+
+def test_register_user_password_validation(client):
+    invalid_user = valid_user()
+    invalid_user["password"] = "invalidpassword"
+
+    response = client.post("/users", json=invalid_user)
+
+    assert response.status_code == 400
+
+def test_register_user_email_validation(client):
+    invalid_user = valid_user()
+    invalid_user["email"] = "invalidemail"
+
+    response = client.post("/users", json=invalid_user)
 
     assert response.status_code == 400
 
 def test_user_under_18_status_403(client):
-    user = valid_user()
-    user["DoB"] = "2020-01-01"
+    underage_user = valid_user()
+    underage_user["DoB"] = "2020-01-01"
 
-    response = client.post("/users", json=user)
+    response = client.post("/users", json=underage_user)
 
     assert response.status_code == 403
 
@@ -73,9 +89,19 @@ def test_payment_success(client):
     assert reponse.status_code == 201
     assert len(payments) == 1
 
-def test_payment_validation(client):
+def test_payment_card_number_validation(client):
     payment = {
         "card_number" : "1111",
+        "amount" : "100",
+    }
+
+    response = client.post("/payments", json=payment)
+
+    assert response.status_code == 400
+
+def test_payment_amount_verification(client):
+    payment = {
+        "card_number" : "1234567887654321",
         "amount" : "1000",
     }
 
@@ -85,7 +111,7 @@ def test_payment_validation(client):
 
 def test_payment_not_found(client):
     payment = {
-        "card_number" : "1234567812345678",
+        "card_number" : "1234567812345678", # old card 1234567887654321
         "amount" : "999",
     }
 
