@@ -30,4 +30,4 @@ GET - /users - Retrieves all users and filters by available cards ```CreditCard=
 POST - /payments - Submits a payment with a card registered to a user
 
 ## __Notes__
-This project is an assignment and for an interview and not to be used practically in real-world deployments.
+This project is a personal assignment and not to be used practically in real-world deployments.
